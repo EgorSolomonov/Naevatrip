@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- TimeZone detecter library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jstimezonedetect/1.0.4/jstz.min.js"></script>
+    <!-- Библиотека обработки времени -->
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.0.4/build/global/luxon.min.js"></script>
+    <link rel="stylesheet" href="jsTasks.css" />
+    <title>Js Task</title>
+  </head>
+  <body>
+    <!-- JS задания -->
+
+    <!-- Задание №1 -->
+    <!-- Задание №2 -->
+    <div class="form-wrapper">
+      <form class="form" name="ticket">
+        <div class="form__select-wrapper">
+          <label for="direction">Выберите маршрут</label>
+          <select class="form__direction-select" name="direction">
+            <option value=""></option>
+            <option value="из A в B">из A в B</option>
+            <option value="из B в A">из B в A</option>
+            <option value="из A в B и обратно в А">
+              из A в B и обратно в А
+            </option>
+          </select>
+        </div>
+        <div class="form__select-wrapper">
+          <label style="display: none" for="timeTo">Выберите время</label>
+          <select style="display: none" name="timeTo" id="timeTo"></select>
+        </div>
+
+        <div class="form__select-wrapper">
+          <label style="display: none" for="timeFrom"
+            >Выберите время обратно</label
+          >
+          <select style="display: none" name="timeFrom" id="timeFrom"></select>
+        </div>
+
+        <div class="form__select-wrapper">
+          <label style="display: none" for="num">Количество билетов</label>
+          <input
+            style="display: none"
+            type="number"
+            min="1"
+            max="10"
+            id="num"
+          />
+        </div>
+        <input
+          type="submit"
+          style="display: none"
+          id="button"
+          value="Посчитать"
+        />
+      </form>
+      <p class="result"></p>
+    </div>
+
+    <script>
+      /* Cкрипт JS задание */
+
+      // необходимые элементы DOM
+      const directionSelect = document.getElementsByName("direction")[0];
+      const timeSelectTo = document.getElementsByName("timeTo")[0];
+      const timeSelectFrom = document.getElementsByName("timeFrom")[0];
+      const ticketsAmount = document.getElementById("num");
+      const button = document.getElementById("button");
+      const result = document.querySelector(".result");
+
+      const timezone = jstz.determine() || "UTC"; // Определение временной зоны пользователя
+
+      // массивы доступного времени
+      const AB = [
+        "2021-08-21 18:00:00",
+        "2021-08-21 18:30:00",
+        "2021-08-21 18:45:00",
+        "2021-08-21 19:00:00",
+        "2021-08-21 19:15:00",
+        "2021-08-21 21:00:00",
+      ];
+
+      const BA = [
+        "2021-08-21 18:30:00",
+        "2021-08-21 18:45:00",
+        "2021-08-21 19:00:00",
+        "2021-08-21 19:15:00",
+        "2021-08-21 19:35:00",
+        "2021-08-21 21:50:00",
+        "2021-08-21 21:55:00",
+      ];
+
+      // Функции для работы с элементами DOM
+      function emptySelectCreator(element) {
+        const option = document.createElement("option");
+        element.innerHTML = ""; // обнуляем селекты
+        element.append(option); // пушим пустой селект
+      }
+
+      function show(element) {
+        element.style.display = "flex";
+        element.previousElementSibling.style.display = "flex";
+      }
+
+      function hide(element) {
+        element.style.display = "none";
+        element.previousElementSibling.style.display = "none";
+      }
+
+      // работа с событиями мыши
+
+      directionSelect.addEventListener("change", (e) => {
+        if (e.currentTarget.value === "из A в B") {
+          emptySelectCreator(timeSelectTo);
+          hide(timeSelectFrom);
+
+          AB.forEach((time) => {
+            userTime = luxon.DateTime.fromSQL(time).setZone(timezone.name()).c;
+
+            const option = document.createElement("option");
+            option.value = time;
+            option.innerHTML = `${userTime.hour === 0 ? "00" : userTime.hour}:${
+              userTime.minute === 0 ? "00" : userTime.minute
+            }`;
+
+            timeSelectTo.append(option);
+
+            show(timeSelectTo);
+          });
+        } else if (e.currentTarget.value === "из B в A") {
+          emptySelectCreator(timeSelectTo);
+          hide(timeSelectFrom);
+
+          BA.forEach((time) => {
+            userTime = luxon.DateTime.fromSQL(time).setZone(timezone.name()).c;
+
+            const option = document.createElement("option");
+            option.value = time;
+            option.innerHTML = `${userTime.hour === 0 ? "00" : userTime.hour}:${
+              userTime.minute === 0 ? "00" : userTime.minute
+            }`;
+
+            timeSelectTo.append(option);
+
+            show(timeSelectTo);
+          });
+        } else if (e.currentTarget.value === "из A в B и обратно в А") {
+          emptySelectCreator(timeSelectTo);
+
+          AB.forEach((time) => {
+            userTime = luxon.DateTime.fromSQL(time).setZone(timezone.name()).c;
+
+            const option = document.createElement("option");
+            option.value = time;
+            option.innerHTML = `${userTime.hour === 0 ? "00" : userTime.hour}:${
+              userTime.minute === 0 ? "00" : userTime.minute
+            }`;
+            timeSelectTo.append(option);
+          });
+
+          show(timeSelectTo);
+          show(timeSelectFrom);
+        } else {
+          hide(timeSelectTo);
+        }
+      });
+
+      timeSelectTo.addEventListener("change", (e) => {
+        emptySelectCreator(timeSelectFrom);
+
+        BA.forEach((time) => {
+          userTime = luxon.DateTime.fromSQL(time).setZone(timezone.name()).c;
+
+          if (
+            Date.parse(time) >=
+            new Date(timeSelectTo.value).setMinutes(
+              new Date(timeSelectTo.value).getMinutes() + 50
+            )
+          ) {
+            const option = document.createElement("option");
+            option.value = time;
+            option.innerHTML = `${userTime.hour === 0 ? "00" : userTime.hour}:${
+              userTime.minute === 0 ? "00" : userTime.minute
+            }`;
+
+            timeSelectFrom.append(option);
+          }
+        });
+      });
+
+      // Показ поля для ввода кол-ва билетов и кнопки - посчитать
+
+      timeSelectTo.addEventListener("change", () => {
+        show(ticketsAmount);
+      });
+
+      timeSelectFrom.addEventListener("change", () => {
+        show(ticketsAmount);
+      });
+
+      ticketsAmount.addEventListener("change", (e) => {
+        if (e.currentTarget.value === "") {
+          hide(button);
+        } else show(button);
+      });
+
+      // Обработка события submit
+
+      button.addEventListener("click", (e) => {
+        e.preventDefault();
+
+        // данные для вывода результата
+        const timeToDestination = [
+          timeSelectTo.value,
+          timeSelectFrom.value,
+          directionSelect.value,
+          50,
+        ];
+
+        const timeFromDestination = timeSelectFrom
+          ? timeSelectFrom.value
+          : null;
+        const amount = ticketsAmount.value;
+
+        const userTimeTo = luxon.DateTime.fromSQL(timeToDestination[0]).setZone(
+          timezone.name()
+        );
+
+        const userTimeFrom = luxon.DateTime.fromSQL(
+          timeToDestination[1]
+        ).setZone(timezone.name());
+
+        const timeToOneSide = userTimeTo.plus({
+          minutes: timeToDestination[3],
+        });
+
+        const timeBack = userTimeFrom.plus({ minutes: timeToDestination[3] });
+
+        // вывод результата
+        result.innerHTML = `Вы выбрали ${
+          amount < 2
+            ? `${amount} билет`
+            : amount < 5 && amount > 1
+            ? `${amount} билета`
+            : `${amount} билетов`
+        } по маршруту ${timeToDestination[2]} стоимостью ${
+          timeToDestination[2] === "из A в B" ||
+          timeToDestination[2] === "из B в A"
+            ? amount * 700
+            : amount * 1200
+        }р.
+                 Это путешествие займет у вас ${
+                   timeToDestination[2] === "из A в B" ||
+                   timeToDestination[2] === "из B в A"
+                     ? timeToDestination[3]
+                     : `${Math.floor((timeToDestination[3] * 2) / 60)} час ${
+                         timeToDestination[3] * 2 - 60
+                       }`
+                 } минут.
+                 Теплоход отправляется в ${
+                   userTimeTo.c.hour === 0 ? "00" : userTimeTo.c.hour
+                 }:${
+          userTimeTo.c.minute === 0 ? "00" : userTimeTo.c.minute
+        }, а прибудет в ${
+          timeToDestination[2] === "из A в B" ||
+          timeToDestination[2] === "из B в A"
+            ? `${timeToOneSide.c.hour === 0 ? "00" : timeToOneSide.c.hour}:${
+                timeToOneSide.c.minute === 0 ? "00" : timeToOneSide.c.minute
+              }.`
+            : `${timeBack.c.hour === 0 ? "00" : timeBack.c.hour}:${
+                timeBack.c.minute === 0 ? "00" : timeBack.c.minute
+              }.`
+        }`;
+      });
+    </script>
+  </body>
+</html>
